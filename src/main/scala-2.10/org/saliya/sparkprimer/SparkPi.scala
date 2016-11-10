@@ -1,8 +1,8 @@
-package org.saliya.graphxprimer
-
-import scala.math.random
+package org.saliya.sparkprimer
 
 import org.apache.spark.sql.SparkSession
+
+import scala.math.random
 
 /** Computes an approximation to pi */
 object SparkPi {

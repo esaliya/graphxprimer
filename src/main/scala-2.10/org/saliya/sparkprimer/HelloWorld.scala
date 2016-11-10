@@ -1,4 +1,4 @@
-package org.saliya.graphxprimer
+package org.saliya.sparkprimer
 
 /**
   * Saliya Ekanayake on 11/9/16.
