@@ -1,7 +1,7 @@
 package org.saliya.graphxprimer
 
 import org.apache.spark.SparkContext
-import org.apache.spark.graphx._
+import org.apache.spark.graphx.{Edge, _}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
@@ -9,7 +9,7 @@ import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
 /**
   * Created by esaliya on 11/15/16.
   */
-object Program {
+object ProgramBackup {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession
       .builder
@@ -52,13 +52,36 @@ object Program {
     val degree: Int = 3 + log2(k)
     val gf: GaloisField = GaloisField.getInstance(1 << degree, Polynomial.createIrreducible(degree, random).toBigInteger.intValue)
 
+    /*
+    int[] randomAssignment = new int[numColors];
+		//System.out.println("Random Assignment:");
+		for (int i = 0; i < numColors; i++) {
+			randomAssignment[i] = random.nextInt(twoRaisedToK);
+			//System.out.println("color: " + i + " vector: " + randomAssignment[i]);
+		}
+
+		int totalSum = 0;
+		long randomSeed = random.nextLong();
+
+		for (int i = 0; i < twoRaisedToK; i++) {
+			//System.out.println("Running circuit for i = " + i);
+			int s = evaluateCircuit(G, randomAssignment, gf, k, i, randomSeed);
+			//System.out.println("s = " + s);
+			totalSum = gf.add(totalSum, s);
+			//System.out.println("totalSum = " + totalSum);
+		}
+		return totalSum > 0;
+     */
+
     val randomAssignment: Array[Int] = new Array[Int](numColors)
     randomAssignment.indices.foreach(i => randomAssignment(i) = random.nextInt(twoRaisedToK))
 
     var totalSum: Int = 0
     val randomSeed: Long = random.nextLong
 
-    for (i <- 0 until twoRaisedToK){
+//    for (i <- 0 until twoRaisedToK){
+    // TODO - debug code
+    for (i <- 0 until 1){
       val s = evaluateCircuit(graph  , randomAssignment, gf, k, i, randomSeed)
       totalSum = gf.add(totalSum, s)
     }
@@ -86,19 +109,28 @@ object Program {
       // First clear the vertex row of table
       val rowOfTable = v._2._2
       rowOfTable.indices.foreach(i => rowOfTable(i) = 0)
-      // Set the last element to initial value of i (remember i goes from 2 to k (including))
+      // set the last element to initial value of i (remember i goes from 2 to k (including))
       rowOfTable(k+1) = 2
 
       val color = v._2._1
       val dotProduct = randomAssignment(color) & iter
       v._2._2(1) = if (Integer.bitCount(dotProduct) % 2 == 1) 0 else 1
+      println("---- node " + v._1 + " array(1)=" + v._2._2(1))
     })
 
-    // Now, we use the pregel operator from 2 to k (including k) times
-    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
-    val maxIterations = k-1 // (k-2)+1
 
-    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
+
+    // Now, we use the pregel operator from 2 to k (including k) times
+
+    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+    // TODO - debug code
+//    val maxIterations = k-1 // (k-2)+1
+    val maxIterations = 2 // (k-2)+1
+
+    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(vprog, sendMsg, mergeMsg)
+
+    // TODO - debug code
+    finalGraph.vertices.collect.foreach(v => println("ID: "  + v._1 + " color: " + v._2._1 + " array: " + v._2._2.mkString("[", ",", "]")))
 
     val products = finalGraph.vertices.mapValues(v => {
       val weight = random.nextInt(fieldSize)
@@ -112,25 +144,29 @@ object Program {
     circuitSum
   }
 
-  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
-    val myRowOfTable = value._2
+  def vprog(vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]): (Int, Array[Int]) = {
+    // TODO - debug code - hard coded k
+    val k = 5
     if (message != null) {
-      val neighbors = message.keySet
-      val i = myRowOfTable(k + 1)
-      myRowOfTable(i) = 0
-
-      for (j <- 1 until i) {
-        for (neighbor <- neighbors) {
-          val weight = random.nextInt(fieldSize)
-          val neighborRowOfTable = message.get(neighbor)
-          var product = gf.multiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
-          product = gf.multiply(weight, product)
-          myRowOfTable(i) = gf.add(myRowOfTable(i), product)
-        }
+      if (vertexId == 1){
+        print("## OK vertex 1")
       }
+      val neighbors = message.keySet
+      val myRowOfTable = value._2
+      val i = myRowOfTable(k + 1)
+      //        myRowOfTable(i) = 0
+      //        for (j <- 1 until i) {
+      //          for (neighbor <- neighbors) {
+      //            val weight = random.nextInt(fieldSize)
+      //            val neighborRowOfTable = message.get(neighbor)
+      //            var product = gf.multiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
+      //            product = gf.multiply(weight, product)
+      //            myRowOfTable(i) = gf.add(myRowOfTable(i), product)
+      //          }
+      //        }
       myRowOfTable(k + 1) += 1 // increment i
-
-      (value._1, myRowOfTable.clone())
+      // TODO - debug code let's see if changing color will get transferred to send
+      (value._1+1, myRowOfTable)
     } else {
       value
     }

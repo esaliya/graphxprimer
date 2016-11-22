@@ -9,6 +9,10 @@ import scala.collection.mutable.HashMap
 object CollectionTest {
   def main(args: Array[String]): Unit = {
 
+    val i = 2
+    for (j <- 1 until i){
+      println("** " + j)
+    }
 
     val a = 12
     println(a.toBinaryString)
@@ -21,9 +25,15 @@ object CollectionTest {
 
     val hm = new mutable.HashMap[Int, Array[Int]]
 
-    hm += (1 -> Array(1,2))
-    hm += (2 -> Array(2,3))
+//    hm += (1 -> Array(1,2))
+//    hm += (2 -> Array(2,3))
     hm += (3 -> Array(3,4))
+
+    val keys = hm.keySet
+    for (key <- keys){
+      println("@@@ key: " + key)
+    }
+
 
 
 
