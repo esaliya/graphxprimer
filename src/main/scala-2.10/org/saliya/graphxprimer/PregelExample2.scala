@@ -22,8 +22,6 @@ object PregelExample2 {
     val n = 5
     val graph = createGraph(k, n, sc)
 
-
-
     // Check the graph
     graph.vertices.collect.foreach(v => println("ID: "  + v._1 + " color: " + v._2._1 + " array: " + v._2._2.mkString("[", ",", "]")))
 

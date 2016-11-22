@@ -5,12 +5,16 @@ import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
+import org.apache.log4j.{Level, Logger}
 
 /**
   * Created by esaliya on 11/15/16.
   */
 object Program {
   def main(args: Array[String]): Unit = {
+    Logger.getLogger("org").setLevel(Level.OFF)
+    Logger.getLogger("akka").setLevel(Level.OFF)
+
     val spark = SparkSession
       .builder
       .appName("Spark Prop Graph").master("local[1]")
@@ -18,19 +22,60 @@ object Program {
 
     val sc = spark.sparkContext
 
-    val k = 5
-    val n = 5
-    val graph = createGraph(k, n, sc)
-
-    graph.vertices.foreach(v =>
-      print("## vertexID: " + v._1 + " color: " + v._2._1 + " arrayVals: " + v._2._2.mkString("[", ",", "]") + "\n"))
-
-    val seed: Int = 10
-    val answer = colorfulGraphMotif(graph, n, k, seed)
-
-    print("@@@ answer: " + answer)
+    var allGood = true
+//    allGood = allGood & testReturnsTrueIfAllColorsInGraphAreDifferent(sc)
+//    println("\ntestReturnsTrueIfAllColorsInGraphAreDifferent " + (if (allGood) "... SUCESS" else "... FAILED"))
+//    allGood = allGood & !testReturnsFalseIfNumberOfColorsIsLessThanK(sc)
+//    println("\ntestReturnsFalseIfNumberOfColorsIsLessThanK " + (if (allGood) "... SUCESS" else "... FAILED"))
+//    allGood = allGood & testReturnsTrueWhenKEqualsOne(sc)
+//    println("\ntestReturnsTrueWhenKEqualsOne " + (if (allGood) "... SUCESS" else "... FAILED"))
+//    allGood = allGood & !testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc)
+//    println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
+    allGood = allGood & testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc)
+//    println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
 
   }
+
+  def testReturnsFalseIfNumberOfColorsIsLessThanK(sc: SparkContext): Boolean = {
+    val k = 5
+    val n = 5
+    val graph = createPathGraph(k, n, Array(0,0,0,0,0), sc)
+    val seed: Long = 10
+    colorfulGraphMotif(graph, 1, k, seed)
+  }
+
+  def testReturnsTrueIfAllColorsInGraphAreDifferent(sc: SparkContext): Boolean = {
+    val k = 5
+    val n = 5
+    val graph = createPathGraph(k, n, null, sc)
+    val seed: Long = 10
+    colorfulGraphMotif(graph, n, k, seed)
+  }
+
+  def testReturnsTrueWhenKEqualsOne(sc: SparkContext): Boolean = {
+    val k = 1
+    val n = 5
+    val graph = createPathGraph(k, n, Array(0,1,2,3,0), sc)
+    val seed: Long = 10
+    colorfulGraphMotif(graph, 4, k, seed)
+  }
+
+  def testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc: SparkContext): Boolean = {
+    val k = 3
+    val n = 5
+    val graph = createPathGraph(k, n, Array(1,1,2,1,1), sc)
+    val seed: Long = 0
+    colorfulGraphMotif(graph, 2, k, seed)
+  }
+
+  def testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc: SparkContext): Boolean = {
+    val k = 3
+    val n = 5
+    val graph = createPathGraph(k, n, Array(2,2,2,1,0), sc)
+    val seed: Long = 3
+    colorfulGraphMotif(graph, 3, k, seed)
+  }
+
 
   def colorfulGraphMotif(graph: Graph[(Int, Array[Int]), Int], numColors: Int, k: Int, seed: Long): Boolean = {
     // invalid input: k is negative
@@ -136,9 +181,6 @@ object Program {
     }
   }
 
-
-
-
   def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
     val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
     hm += triplet.srcId.toInt -> triplet.srcAttr._2
@@ -156,19 +198,14 @@ object Program {
     msg1
   }
 
-
-
-
-
   /**
-    * A quick test method to create a custom graph.
-    * A generalized method is necessary in future.
+    * Creates a path graph with distinct colors
     *
     * @param k motif size
     * @param n the number of nodes
     * @return a Spark Graph object
     */
-  def createGraph(k: Int, n: Int, sc: SparkContext): Graph[(Int, Array[Int]), Int] = {
+  def createPathGraph(k: Int, n: Int, colors: Array[Int], sc: SparkContext): Graph[(Int, Array[Int]), Int] = {
 
     // from Jose's test of "testReturnsTrueIfAllColorsInGraphAreDifferent" in ColorfulGraphMotifTest //
 
@@ -178,7 +215,7 @@ object Program {
     for (i <- 0 until n){
       // (k+1) elements for the table, last element is to keep track of superstep value,
       // i.e. value of i in the original evaluate circuit code
-      vertices(i) = (i.toLong, (i, new Array[Int](k+2)))
+      vertices(i) = ( if (colors == null) i.toLong else colors(i), (i, new Array[Int](k+2)))
       if (i < n-1){
         edges(2*i) = Edge(i.toLong, (i+1).toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
         edges(2*i+1) = Edge((i+1).toLong, i.toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
