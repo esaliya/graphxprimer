@@ -23,16 +23,16 @@ object Program {
     val sc = spark.sparkContext
 
     var allGood = true
-//    allGood = allGood & testReturnsTrueIfAllColorsInGraphAreDifferent(sc)
-//    println("\ntestReturnsTrueIfAllColorsInGraphAreDifferent " + (if (allGood) "... SUCESS" else "... FAILED"))
-//    allGood = allGood & !testReturnsFalseIfNumberOfColorsIsLessThanK(sc)
-//    println("\ntestReturnsFalseIfNumberOfColorsIsLessThanK " + (if (allGood) "... SUCESS" else "... FAILED"))
-//    allGood = allGood & testReturnsTrueWhenKEqualsOne(sc)
-//    println("\ntestReturnsTrueWhenKEqualsOne " + (if (allGood) "... SUCESS" else "... FAILED"))
-//    allGood = allGood & !testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc)
-//    println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
+    allGood = allGood & testReturnsTrueIfAllColorsInGraphAreDifferent(sc)
+    println("\ntestReturnsTrueIfAllColorsInGraphAreDifferent " + (if (allGood) "... SUCESS" else "... FAILED"))
+    allGood = allGood & !testReturnsFalseIfNumberOfColorsIsLessThanK(sc)
+    println("\ntestReturnsFalseIfNumberOfColorsIsLessThanK " + (if (allGood) "... SUCESS" else "... FAILED"))
+    allGood = allGood & testReturnsTrueWhenKEqualsOne(sc)
+    println("\ntestReturnsTrueWhenKEqualsOne " + (if (allGood) "... SUCESS" else "... FAILED"))
+    allGood = allGood & !testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc)
+    println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
     allGood = allGood & testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc)
-//    println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
+    println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
 
   }
 
@@ -73,6 +73,7 @@ object Program {
     val n = 5
     val graph = createPathGraph(k, n, Array(2,2,2,1,0), sc)
     val seed: Long = 3
+
     colorfulGraphMotif(graph, 3, k, seed)
   }
 
@@ -215,7 +216,7 @@ object Program {
     for (i <- 0 until n){
       // (k+1) elements for the table, last element is to keep track of superstep value,
       // i.e. value of i in the original evaluate circuit code
-      vertices(i) = ( if (colors == null) i.toLong else colors(i), (i, new Array[Int](k+2)))
+      vertices(i) = ( i.toLong, (if (colors == null) i else colors(i), new Array[Int](k+2)))
       if (i < n-1){
         edges(2*i) = Edge(i.toLong, (i+1).toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
         edges(2*i+1) = Edge((i+1).toLong, i.toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
