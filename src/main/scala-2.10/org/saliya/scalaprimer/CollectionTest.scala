@@ -35,7 +35,9 @@ object CollectionTest {
     }
 
 
-
+    val edges:collection.mutable.ArrayBuffer[Int] = new collection.mutable.ArrayBuffer()
+    edges += 10
+    edges.foreach(println)
 
 
 

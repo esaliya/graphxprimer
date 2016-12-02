@@ -7,6 +7,9 @@ import org.apache.spark.sql.SparkSession
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
 import org.apache.log4j.{Level, Logger}
 
+import scala.collection.mutable.ArrayBuffer
+import scala.io.Source
+
 /**
   * Created by esaliya on 11/15/16.
   */
@@ -17,11 +20,22 @@ object Program {
 
     val spark = SparkSession
       .builder
-      .appName("Spark Prop Graph").master("local[1]")
+      .appName("Spark Prop Graph")
       .getOrCreate()
 
     val sc = spark.sparkContext
 
+    simpleTests(sc)
+
+    /*val graph = createGraphFromFile("/Users/esaliya/Downloads/synthetic-graphs/geometric-0-k10-0-n5000-r10.txt", 10, 5000, sc)
+    graph.vertices.foreach(v => println("vertex: " + v._1 + " color: " + v._2._1))
+    println("\n\n vertex count: " + graph.vertices.count())
+    println()
+    graph.edges.foreach(e => println("edge from: " + e.srcId + " to: " + e.dstId))
+    println("\n\n edge count: " + graph.edges.count())*/
+  }
+
+  def simpleTests (sc: SparkContext): Unit = {
     var allGood = true
     allGood = allGood & testReturnsTrueIfAllColorsInGraphAreDifferent(sc)
     println("\ntestReturnsTrueIfAllColorsInGraphAreDifferent " + (if (allGood) "... SUCESS" else "... FAILED"))
@@ -33,8 +47,9 @@ object Program {
     println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
     allGood = allGood & testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc)
     println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCESS" else "... FAILED"))
-
   }
+
+
 
   def testReturnsFalseIfNumberOfColorsIsLessThanK(sc: SparkContext): Boolean = {
     val k = 5
@@ -220,6 +235,46 @@ object Program {
       if (i < n-1){
         edges(2*i) = Edge(i.toLong, (i+1).toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
         edges(2*i+1) = Edge((i+1).toLong, i.toLong, 0) // The edge value is not necessary here but seems Spark needs to have one
+      }
+    }
+
+    val defaultVertex = (-1, Array(-1))
+
+    val verticesRDD: RDD[(VertexId, (Int, Array[Int]))] = sc.parallelize(vertices)
+    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges)
+
+    Graph(verticesRDD, edgesRDD, defaultVertex)
+  }
+
+  def createGraphFromFile(f:String, k: Int, n: Int, sc: SparkContext): Graph[(Int, Array[Int]), Int] ={
+    val vertices = new Array[(Long, (Int, Array[Int]))](n)
+    val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
+    var edgeCount = 0
+    var mode = -1
+    for (line <- Source.fromFile(f).getLines()){
+      if (mode == -1 && "# node color".equals(line)){
+        mode = 0
+      }
+
+      if (mode == 0 && "# head tail".equals(line)){
+        mode = 1
+      }
+
+      if ((mode != 0 && mode != 1) && line.startsWith("#")) {
+        mode = -1
+      }
+
+      if (!line.startsWith("#")){
+        val splits = line.split(" ")
+        if (mode == 0){
+          val vertexId = splits(0).toInt
+          val color = splits(1).toInt
+          vertices(vertexId) = (vertexId.toLong, (color, new Array[Int](k+2)))
+        } else if (mode == 1){
+          edges += Edge(splits(0).toInt, splits(1).toInt, 1)
+          edges += Edge(splits(1).toInt, splits(0).toInt, 1) // undirected edges
+          edgeCount += 2
+        }
       }
     }
 
