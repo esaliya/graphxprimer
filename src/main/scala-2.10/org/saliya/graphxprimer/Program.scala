@@ -7,6 +7,7 @@ import org.apache.spark.sql.SparkSession
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
 import org.apache.log4j.{Level, Logger}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
@@ -25,14 +26,28 @@ object Program {
 
     val sc = spark.sparkContext
 
-    simpleTests(sc)
+//    simpleTests(sc)
+    largeTest(sc, args(0))
 
-    /*val graph = createGraphFromFile("/Users/esaliya/Downloads/synthetic-graphs/geometric-0-k10-0-n5000-r10.txt", 10, 5000, sc)
-    graph.vertices.foreach(v => println("vertex: " + v._1 + " color: " + v._2._1))
-    println("\n\n vertex count: " + graph.vertices.count())
-    println()
-    graph.edges.foreach(e => println("edge from: " + e.srcId + " to: " + e.dstId))
-    println("\n\n edge count: " + graph.edges.count())*/
+  }
+
+
+  def largeTest(sc: SparkContext, f: String): Unit ={
+//    val graph = createGraphFromFile("/Users/esaliya/Downloads/synthetic-graphs/geometric-0-k10-0-n5000-r10.txt", 10, 5000, sc)
+    val n = 5000
+    val k = 10
+    val seed: Long = 10
+
+    val tup = createGraphFromFile(f, k, n, sc)
+    val graph = tup._1
+    val numColors = tup._2
+    val ret = colorfulGraphMotif(graph, numColors, k, seed)
+    println("\n*** Large Test for " + f + " returned " + ret)
+//    graph.vertices.foreach(v => println("vertex: " + v._1 + " color: " + v._2._1))
+//    println("\n\n vertex count: " + graph.vertices.count())
+//    println()
+//    graph.edges.foreach(e => println("edge from: " + e.srcId + " to: " + e.dstId))
+//    println("\n\n edge count: " + graph.edges.count())
   }
 
   def simpleTests (sc: SparkContext): Unit = {
@@ -246,10 +261,11 @@ object Program {
     Graph(verticesRDD, edgesRDD, defaultVertex)
   }
 
-  def createGraphFromFile(f:String, k: Int, n: Int, sc: SparkContext): Graph[(Int, Array[Int]), Int] ={
+  def createGraphFromFile(f:String, k: Int, n: Int, sc: SparkContext): (Graph[(Int, Array[Int]), Int], Int) ={
     val vertices = new Array[(Long, (Int, Array[Int]))](n)
     val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
     var edgeCount = 0
+    val colors = new mutable.HashSet[Int]()
     var mode = -1
     for (line <- Source.fromFile(f).getLines()){
       if (mode == -1 && "# node color".equals(line)){
@@ -269,6 +285,7 @@ object Program {
         if (mode == 0){
           val vertexId = splits(0).toInt
           val color = splits(1).toInt
+          colors.add(color)
           vertices(vertexId) = (vertexId.toLong, (color, new Array[Int](k+2)))
         } else if (mode == 1){
           edges += Edge(splits(0).toInt, splits(1).toInt, 1)
@@ -283,7 +300,7 @@ object Program {
     val verticesRDD: RDD[(VertexId, (Int, Array[Int]))] = sc.parallelize(vertices)
     val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges)
 
-    Graph(verticesRDD, edgesRDD, defaultVertex)
+    (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
   }
 
 }
