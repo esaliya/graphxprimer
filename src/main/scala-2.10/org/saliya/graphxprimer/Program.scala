@@ -27,15 +27,14 @@ object Program {
     val sc = spark.sparkContext
 
 //    simpleTests(sc)
-    largeTest(sc, args(0))
+    largeTest(sc, args(0), args(1).toInt, args(2).toInt)
 
   }
 
 
-  def largeTest(sc: SparkContext, f: String): Unit ={
+  def largeTest(sc: SparkContext, f: String, n: Int, k: Int): Unit ={
 //    val graph = createGraphFromFile("/Users/esaliya/Downloads/synthetic-graphs/geometric-0-k10-0-n5000-r10.txt", 10, 5000, sc)
-    val n = 5000
-    val k = 10
+
     val seed: Long = 10
 
     val tup = createGraphFromFile(f, k, n, sc)
