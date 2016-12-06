@@ -118,9 +118,9 @@ object Program {
     }
     // trivial case: number of colors is less than k
     // no colorful graph of size k
-    if (numColors < k) {
+    /*if (numColors < k) {
       return false
-    }
+    }*/
 
     val random = new java.util.Random(seed)
     // (1 << k) is 2 raised to the kth power
