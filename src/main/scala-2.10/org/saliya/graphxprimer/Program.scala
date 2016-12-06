@@ -42,7 +42,7 @@ object Program {
     val graph = tup._1
     val numColors = tup._2
     val ret = colorfulGraphMotif(graph, numColors, k, seed)
-    println("\n*** Large Test for " + f + " returned " + ret)
+    println("\n*** Large Test for " + f + " returned " + ret + " numcolors: " + numColors + " k: " + k)
 //    graph.vertices.foreach(v => println("vertex: " + v._1 + " color: " + v._2._1))
 //    println("\n\n vertex count: " + graph.vertices.count())
 //    println()
