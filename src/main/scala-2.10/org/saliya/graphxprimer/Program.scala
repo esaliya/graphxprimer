@@ -275,11 +275,11 @@ object Program {
         mode = 1
       }
 
-      if ((mode != 0 && mode != 1) && line.startsWith("#")) {
-        mode = -1
+      if (mode == 1 && "# motif".equals(line)){
+        mode = 2
       }
 
-      if (!line.startsWith("#")){
+      if (!line.startsWith("#") && mode != 2){
         val splits = line.split(" ")
         if (mode == 0){
           val vertexId = splits(0).toInt
