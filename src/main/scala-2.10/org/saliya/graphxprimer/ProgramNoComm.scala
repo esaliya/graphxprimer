@@ -31,8 +31,8 @@ object ProgramNoComm {
 
     val sc = spark.sparkContext
 
-    simpleTests(sc)
-//    largeTest(sc, args(0), args(1).toInt, args(2).toInt)
+//    simpleTests(sc)
+    largeTest(sc, args(0), args(1).toInt, args(2).toInt)
 
   }
 
