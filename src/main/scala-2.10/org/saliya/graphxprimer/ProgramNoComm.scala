@@ -1,11 +1,11 @@
 package org.saliya.graphxprimer
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
-import org.apache.log4j.{Level, Logger}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -13,8 +13,13 @@ import scala.io.Source
 
 /**
   * Created by esaliya on 11/15/16.
+  *
+  * This is a test program. The idea is to test the
+  * similar computation as in the original Program
+  * but with no array communication, which seems to
+  * kill Spark's performance
   */
-object Program {
+object ProgramNoComm {
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
@@ -141,7 +146,17 @@ object Program {
     totalSum > 0
   }
 
-
+  private def log2(x: Int): Int = {
+    if (x <= 0) throw new IllegalArgumentException("Error. Argument must be greater than 0. Found " + x)
+    var result: Int = 0
+    var X = x
+    X >>= 1
+    while (X > 0) {
+      result += 1
+      X >>= 1
+    }
+    result
+  }
 
   def evaluateCircuit(graph: Graph[(Int, Array[Int]), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
     val random = new java.util.Random(randomSeed)
@@ -160,7 +175,7 @@ object Program {
     })
 
     // Now, we use the pregel operator from 2 to k (including k) times
-    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+    val initialMsg: Int = 0
     val maxIterations = k-1 // (k-2)+1
 
     val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
@@ -177,18 +192,19 @@ object Program {
     circuitSum
   }
 
-  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
+  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) =
+    (vertexId: VertexId, value: (Int, Array[Int]), message: Int) => {
     val myRowOfTable = value._2
-    if (message != null) {
-      val neighbors = message.keySet
+    if (message != 0) {
+      val neighbors = message
       val i = myRowOfTable(k + 1)
       myRowOfTable(i) = 0
 
       for (j <- 1 until i) {
-        for (neighbor <- neighbors) {
+        for (neighbor <- 0 until neighbors) {
           val weight = random.nextInt(fieldSize)
-          val neighborRowOfTable = message.get(neighbor)
-          var product = gf.multiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
+          val neighborRowOfTable = myRowOfTable
+          var product = gf.multiply(myRowOfTable(j), neighborRowOfTable(i - j))
           product = gf.multiply(weight, product)
           myRowOfTable(i) = gf.add(myRowOfTable(i), product)
         }
@@ -201,21 +217,13 @@ object Program {
     }
   }
 
-  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
-    val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
-    hm += triplet.srcId.toInt -> triplet.srcAttr._2
-    Iterator((triplet.dstId, hm))
+  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]):
+  Iterator[(VertexId, Int)] = {
+    Iterator((triplet.dstId, 1))
   }
 
-  def mergeMsg(msg1: scala.collection.mutable.HashMap[Int, Array[Int]], msg2: scala.collection.mutable.HashMap[Int, Array[Int]]): scala.collection.mutable.HashMap[Int, Array[Int]] = {
-    val keys = msg2.keys
-    for (key <- keys) {
-      val array = msg2.get(key)
-      if (array.nonEmpty) {
-        msg1.put(key, array.get)
-      }
-    }
-    msg1
+  def mergeMsg(msg1: Int, msg2: Int): Int = {
+    msg1+msg2
   }
 
   /**
@@ -290,18 +298,6 @@ object Program {
     val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges)
 
     (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
-  }
-
-  private def log2(x: Int): Int = {
-    if (x <= 0) throw new IllegalArgumentException("Error. Argument must be greater than 0. Found " + x)
-    var result: Int = 0
-    var X = x
-    X >>= 1
-    while (X > 0) {
-      result += 1
-      X >>= 1
-    }
-    result
   }
 
 }
