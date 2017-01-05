@@ -178,7 +178,8 @@ object ProgramNoComm {
     val initialMsg: Int = 0
     val maxIterations = k-1 // (k-2)+1
 
-    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
+    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(
+      vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
 
     val products = finalGraph.vertices.mapValues(v => {
       val weight = random.nextInt(fieldSize)

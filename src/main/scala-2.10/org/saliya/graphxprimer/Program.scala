@@ -26,8 +26,8 @@ object Program {
 
     val sc = spark.sparkContext
 
-    simpleTests(sc)
-//    largeTest(sc, args(0), args(1).toInt, args(2).toInt)
+//    simpleTests(sc)
+    largeTest(sc, args(0), args(1).toInt, args(2).toInt)
 
   }
 
@@ -53,14 +53,14 @@ object Program {
     var allGood = true
     allGood = allGood & testReturnsTrueIfAllColorsInGraphAreDifferent(sc)
     println("\ntestReturnsTrueIfAllColorsInGraphAreDifferent " + (if (allGood) "... SUCCESS" else "... FAILED"))
-//    allGood = allGood & !testReturnsFalseIfNumberOfColorsIsLessThanK(sc)
-//    println("\ntestReturnsFalseIfNumberOfColorsIsLessThanK " + (if (allGood) "... SUCCESS" else "... FAILED"))
-//    allGood = allGood & testReturnsTrueWhenKEqualsOne(sc)
-//    println("\ntestReturnsTrueWhenKEqualsOne " + (if (allGood) "... SUCCESS" else "... FAILED"))
-//    allGood = allGood & !testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc)
-//    println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCCESS" else "... FAILED"))
-//    allGood = allGood & testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc)
-//    println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCCESS" else "... FAILED"))
+    allGood = allGood & !testReturnsFalseIfNumberOfColorsIsLessThanK(sc)
+    println("\ntestReturnsFalseIfNumberOfColorsIsLessThanK " + (if (allGood) "... SUCCESS" else "... FAILED"))
+    allGood = allGood & testReturnsTrueWhenKEqualsOne(sc)
+    println("\ntestReturnsTrueWhenKEqualsOne " + (if (allGood) "... SUCCESS" else "... FAILED"))
+    allGood = allGood & !testReturnsFalseWhenThereIsNoColorfulMotifInPathGraph(sc)
+    println("\ntestReturnsFalseWhenThereIsNoColorfulMotifInPathGraph " + (if (allGood) "... SUCCESS" else "... FAILED"))
+    allGood = allGood & testReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph(sc)
+    println("\ntestReturnsTrueWhenThereIsOneColorfulMotifAtEndOfPathGraph " + (if (allGood) "... SUCCESS" else "... FAILED"))
   }
 
 
@@ -117,9 +117,9 @@ object Program {
     }
     // trivial case: number of colors is less than k
     // no colorful graph of size k
-    /*if (numColors < k) {
+    if (numColors < k) {
       return false
-    }*/
+    }
 
     val random = new java.util.Random(seed)
     // (1 << k) is 2 raised to the kth power
