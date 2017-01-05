@@ -43,7 +43,7 @@ object ProgramNoComm {
     val seed: Long = 10
 
     val tup = createGraphFromFile(f, k, n, sc)
-    val graph = tup._1
+    val graph = tup._1.cache()
     val numColors = tup._2
     val ret = colorfulGraphMotif(graph, numColors, k, seed)
     println("\n*** Large Test for " + f + " returned " + ret + " numcolors: " + numColors + " k: " + k)
@@ -173,6 +173,8 @@ object ProgramNoComm {
       val dotProduct = randomAssignment(color) & iter
       v._2._2(1) = if (Integer.bitCount(dotProduct) % 2 == 1) 0 else 1
     })
+
+
 
     // Now, we use the pregel operator from 2 to k (including k) times
     val initialMsg: Int = 0
