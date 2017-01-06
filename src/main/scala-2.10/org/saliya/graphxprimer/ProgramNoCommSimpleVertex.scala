@@ -114,7 +114,9 @@ object ProgramNoCommSimpleVertex {
 
 */
 
-  def colorfulGraphMotif(graph: Graph[(Int, Int), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+  def colorfulGraphMotif(g: Graph[(Int, Int), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+    val graph = g.cache()
+
     // invalid input: k is negative
     if (k <= 0) throw new IllegalArgumentException("k must be a positive integer")
     // trivial case: k = 1
@@ -169,7 +171,7 @@ object ProgramNoCommSimpleVertex {
     val initialMsg: Int = 0
     val maxIterations = k-1 // (k-2)+1
 
-    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Both)(
+    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(
       vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
 
     // dummy wrong computations
