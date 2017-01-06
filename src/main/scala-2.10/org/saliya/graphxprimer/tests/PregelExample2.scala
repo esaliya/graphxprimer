@@ -1,4 +1,4 @@
-package org.saliya.graphxprimer
+package org.saliya.graphxprimer.tests
 
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx._

@@ -1,8 +1,8 @@
-package org.saliya.graphxprimer
+package org.saliya.graphxprimer.tests
 
+import org.apache.spark.graphx.{Edge, Graph, VertexId}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.graphx.{Edge, Graph, VertexId}
 
 /**
   * Saliya Ekanayake on 11/10/16.

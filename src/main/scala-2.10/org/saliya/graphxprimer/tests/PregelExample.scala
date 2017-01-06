@@ -1,8 +1,8 @@
-package org.saliya.graphxprimer
+package org.saliya.graphxprimer.tests
 
+import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.graphx._
 
 /**
   * Created by esaliya on 11/16/16.
