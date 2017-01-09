@@ -332,7 +332,10 @@ object ProgramLikePR {
 
       val newPR = teleport + (1.0 - resetProb) * msgSum(0)
       val newDelta = if (lastDelta == Double.NegativeInfinity) newPR else newPR - oldPR
-      (newPR, Array(newDelta))
+      // TODO - debug - what happens if we omit the new array creation here
+//      (newPR, Array(newDelta))
+      attr._2(0) = newDelta
+      (newPR, attr._2)
     }
 
     def sendMessage(edge: EdgeTriplet[(Double, Array[Double]), Double]) = {
