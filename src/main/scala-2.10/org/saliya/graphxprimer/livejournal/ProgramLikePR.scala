@@ -331,7 +331,7 @@ object ProgramLikePR {
       teleport = oldPR*delta
 
       val newPR = teleport + (1.0 - resetProb) * msgSum(0)
-      val newDelta = if (lastDelta == Double.NegativeInfinity) newPR else newPR - oldPR
+      val newDelta = if (lastDelta(0) == Double.NegativeInfinity) newPR else newPR - oldPR
       // TODO - debug - what happens if we omit the new array creation here
 //      (newPR, Array(newDelta))
       attr._2(0) = newDelta
