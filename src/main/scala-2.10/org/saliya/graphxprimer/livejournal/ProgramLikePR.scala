@@ -299,7 +299,7 @@ object ProgramLikePR {
 
     // Initialize the pagerankGraph with each edge attribute
     // having weight 1/outDegree and each vertex with attribute 1.0.
-    val pagerankGraph: Graph[(Double, Double), Double] = graph
+    val pagerankGraph: Graph[(Double, Array[Double]), Double] = graph
       // Associate the degree with each vertex
       .outerJoinVertices(graph.outDegrees) {
       (vid, vdata, deg) => deg.getOrElse(0)
@@ -308,49 +308,52 @@ object ProgramLikePR {
       .mapTriplets( e => 1.0 / e.srcAttr )
       // Set the vertex attributes to (initialPR, delta = 0)
       .mapVertices { (id, attr) =>
-      if (id == src) (1.0, Double.NegativeInfinity) else (0.0, 0.0)
+      if (id == src) (1.0, Array(Double.NegativeInfinity)) else (0.0, Array(0.0))
     }
       .cache()
 
     // Define the three functions needed to implement PageRank in the GraphX
     // version of Pregel
-    def vertexProgram(id: VertexId, attr: (Double, Double), msgSum: Double): (Double, Double) = {
+    def vertexProgram(id: VertexId, attr: (Double, Array[Double]), msgSum: Array[Double]): (Double, Array[Double]) = {
       val (oldPR, lastDelta) = attr
-      val newPR = oldPR + (1.0 - resetProb) * msgSum
-      (newPR, newPR - oldPR)
+      val newPR = oldPR + (1.0 - resetProb) * msgSum(0)
+      (newPR, Array(newPR - oldPR))
     }
 
-    def personalizedVertexProgram(id: VertexId, attr: (Double, Double),
-                                  msgSum: Double): (Double, Double) = {
+    def personalizedVertexProgram(id: VertexId, attr: (Double, Array[Double]),
+                                  msgSum: Array[Double]): (Double, Array[Double]) = {
       val (oldPR, lastDelta) = attr
       var teleport = oldPR
       val delta = if (src==id) resetProb else 0.0
       teleport = oldPR*delta
 
-      val newPR = teleport + (1.0 - resetProb) * msgSum
+      val newPR = teleport + (1.0 - resetProb) * msgSum(0)
       val newDelta = if (lastDelta == Double.NegativeInfinity) newPR else newPR - oldPR
-      (newPR, newDelta)
+      (newPR, Array(newDelta))
     }
 
-    def sendMessage(edge: EdgeTriplet[(Double, Double), Double]) = {
-      if (edge.srcAttr._2 > tol) {
-        Iterator((edge.dstId, edge.srcAttr._2 * edge.attr))
+    def sendMessage(edge: EdgeTriplet[(Double, Array[Double]), Double]) = {
+      if (edge.srcAttr._2(0) > tol) {
+        Iterator((edge.dstId, Array(edge.srcAttr._2(0) * edge.attr)))
       } else {
         Iterator.empty
       }
     }
 
-    def messageCombiner(a: Double, b: Double): Double = a + b
+    def messageCombiner(a: Array[Double], b: Array[Double]): Array[Double] = {
+      a(0) = a(0)+b(0)
+      a
+    }
 
     // The initial message received by all vertices in PageRank
-    val initialMessage = if (personalized) 0.0 else resetProb / (1.0 - resetProb)
+    val initialMessage = if (personalized) Array(0.0) else Array(resetProb / (1.0 - resetProb))
 
     // Execute a dynamic version of Pregel.
     val vp = if (personalized) {
-      (id: VertexId, attr: (Double, Double), msgSum: Double) =>
+      (id: VertexId, attr: (Double, Array[Double]), msgSum: Array[Double]) =>
         personalizedVertexProgram(id, attr, msgSum)
     } else {
-      (id: VertexId, attr: (Double, Double), msgSum: Double) =>
+      (id: VertexId, attr: (Double, Array[Double]), msgSum: Array[Double]) =>
         vertexProgram(id, attr, msgSum)
     }
 
