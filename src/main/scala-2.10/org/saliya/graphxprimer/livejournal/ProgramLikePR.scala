@@ -317,7 +317,10 @@ object ProgramLikePR {
     def vertexProgram(id: VertexId, attr: (Double, Array[Double]), msgSum: Array[Double]): (Double, Array[Double]) = {
       val (oldPR, lastDelta) = attr
       val newPR = oldPR + (1.0 - resetProb) * msgSum(0)
-      (newPR, Array(newPR - oldPR))
+      // TODO - debug - what happens if we omit the new array creation here
+      //      (newPR, Array(newPR - oldPR))
+      attr._2(0) = newPR - oldPR
+      (newPR, attr._2)
     }
 
     def personalizedVertexProgram(id: VertexId, attr: (Double, Array[Double]),
