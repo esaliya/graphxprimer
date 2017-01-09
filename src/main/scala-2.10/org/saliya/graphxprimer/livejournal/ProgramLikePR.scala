@@ -37,8 +37,8 @@ object ProgramLikePR {
     val seed: Long = 10
 
     // TODO - debug - create a simple graph here
-//    val tup = createGraphFromFile(f, k, n, sc)
-    val tup = createSimpleGraphFromFile(f, k, n, sc)
+    val tup = createGraphFromFile(f, k, n, sc)
+//    val tup = createSimpleGraphFromFile(f, k, n, sc)
     // TODO - debug - add caching here similar to the original PR
     val g = tup._1.cache()
     val graph = g.partitionBy(RandomVertexCut)
