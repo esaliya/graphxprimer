@@ -37,7 +37,8 @@ object ProgramLikePR {
     val seed: Long = 10
 
     // TODO - debug - create a simple graph here
-    val tup = createGraphFromFile(f, k, n, sc)
+    val tup = createLiveJournalGraphFromFile(f, k, n, sc)
+//    val tup = createGraphFromFile(f, k, n, sc)
 //    val tup = createSimpleGraphFromFile(f, k, n, sc)
     // TODO - debug - add caching here similar to the original PR
     val g = tup._1.cache()
@@ -214,6 +215,30 @@ object ProgramLikePR {
     (Graph(verticesRDD, edgesRDD, defaultVertex, StorageLevel.MEMORY_ONLY, StorageLevel.MEMORY_ONLY), colors.size)
   }
 
+  def createLiveJournalGraphFromFile(f:String, k: Int, n: Int, sc: SparkContext): (Graph[(Int, Array[Int]), Int], Int) ={
+    val vertices = new Array[(Long, (Int, Array[Int]))](n)
+    val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
+    var edgeCount = 0
+    for (line <- Source.fromFile(f).getLines()){
+
+      if (!line.startsWith("#")){
+        val splits = line.split("\t")
+        val srcId = splits(0).toInt
+        val destId = splits(1).toInt
+        vertices(srcId) = (srcId.toLong, (srcId, new Array[Int](k+2)))
+        vertices(destId) = (destId.toLong, (destId, new Array[Int](k+2)))
+        edges += Edge(srcId, destId, 1) // just one edge
+        edgeCount += 1
+      }
+    }
+
+    val defaultVertex = (-1, Array(-1))
+
+    val verticesRDD: RDD[(VertexId, (Int, Array[Int]))] = sc.parallelize(vertices)
+    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges)
+
+    (Graph(verticesRDD, edgesRDD, defaultVertex, StorageLevel.MEMORY_ONLY, StorageLevel.MEMORY_ONLY), n)
+  }
 
 
   def createGraphFromFile(f:String, k: Int, n: Int, sc: SparkContext): (Graph[(Int, Array[Int]), Int], Int) ={
