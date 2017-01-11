@@ -20,7 +20,7 @@ object PageRank {
 
     val tol = 0.001F
 
-    val sc = new SparkContext(conf.setAppName("PageRank").setMaster("local[1]"))
+    val sc = new SparkContext(conf.setAppName("PageRank"))
     val unpartitionedGraph = GraphLoader.edgeListFile(sc, fname,
       numEdgePartitions = numEParts,
       edgeStorageLevel = StorageLevel.MEMORY_ONLY,
