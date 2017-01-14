@@ -1,41 +1,92 @@
 package org.saliya.graphxprimer.livejournal
 
 import org.apache.spark.graphx.PartitionStrategy.RandomVertexCut
+import org.apache.spark.graphx.lib.{ConnectedComponents, PageRank, TriangleCount}
 import org.apache.spark.graphx.{EdgeDirection, EdgeTriplet, Pregel, _}
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.collection.mutable
 import scala.reflect.ClassTag
 
 /**
   * Saliya Ekanayake on 1/7/17.
+  *
+  * Direct copy of the Spark's PageRank implementation
   */
 object PageRankVertexPrimButArrayComm {
   def main(args: Array[String]): Unit = {
-    val fname = args(0)
-    val numEParts = args(1).toInt
+    val taskType = args(0)
+    val fname = args(1)
+    val optionsList = args.drop(2).map { arg =>
+      arg.dropWhile(_ == '-').split('=') match {
+        case Array(opt, v) => (opt -> v)
+        case _ => throw new IllegalArgumentException("Invalid argument: " + arg)
+      }
+    }
+    val options = mutable.Map(optionsList: _*)
 
     val conf = new SparkConf()
     GraphXUtils.registerKryoClasses(conf)
 
-    val tol = 0.001F
+    val numEPart = options.remove("numEPart").map(_.toInt).getOrElse {
+      println("Set the number of edge partitions using --numEPart.")
+      sys.exit(1)
+    }
+    val partitionStrategy: Option[PartitionStrategy] = options.remove("partStrategy")
+      .map(PartitionStrategy.fromString(_))
+    val edgeStorageLevel = options.remove("edgeStorageLevel")
+      .map(StorageLevel.fromString(_)).getOrElse(StorageLevel.MEMORY_ONLY)
+    val vertexStorageLevel = options.remove("vertexStorageLevel")
+      .map(StorageLevel.fromString(_)).getOrElse(StorageLevel.MEMORY_ONLY)
 
-    val sc = new SparkContext(conf.setAppName("PageRank"))
-    val unpartitionedGraph = GraphLoader.edgeListFile(sc, fname,
-      numEdgePartitions = numEParts,
-      edgeStorageLevel = StorageLevel.MEMORY_ONLY,
-      vertexStorageLevel = StorageLevel.MEMORY_ONLY).cache()
+    taskType match {
+      case "pagerank" =>
+        val tol = options.remove("tol").map(_.toFloat).getOrElse(0.001F)
+        val outFname = options.remove("output").getOrElse("")
+        val numIterOpt = options.remove("numIter").map(_.toInt)
 
-    val graph = unpartitionedGraph.partitionBy(RandomVertexCut)
+        options.foreach {
+          case (opt, _) => throw new IllegalArgumentException("Invalid option: " + opt)
+        }
 
-    println("*****GRAPHX: Number of vertices " + graph.vertices.count)
-    println("*****GRAPHX: Number of edges " + graph.edges.count)
+        println("======================================")
+        println("|             PageRank               |")
+        println("======================================")
 
-    val pr = runUntilConvergence(graph, tol).vertices.cache()
+        val sc = new SparkContext(conf.setAppName("PageRank(" + fname + ")"))
 
-    println("GRAPHX: Total rank: " + pr.map(_._2).reduce(_ + _))
+        val unpartitionedGraph = GraphLoader.edgeListFile(sc, fname,
+          numEdgePartitions = numEPart,
+          edgeStorageLevel = edgeStorageLevel,
+          vertexStorageLevel = vertexStorageLevel).cache()
+        val graph = partitionStrategy.foldLeft(unpartitionedGraph)(_.partitionBy(_))
 
-    sc.stop()
+        println("GRAPHX: Number of vertices " + graph.vertices.count)
+        println("GRAPHX: Number of edges " + graph.edges.count)
+
+        val pr = (numIterOpt match {
+          //          case Some(numIter) => PageRank.run(graph, numIter)
+          case None => runUntilConvergence(graph, tol)
+        }).vertices.cache()
+
+        println("GRAPHX: Total rank: " + pr.map(_._2).reduce(_ + _))
+
+        if (!outFname.isEmpty) {
+          //          logWarning("Saving pageranks of pages to " + outFname)
+          pr.map { case (id, r) => id + "\t" + r }.saveAsTextFile(outFname)
+        }
+
+        sc.stop()
+      case _ =>
+        println("Invalid task type.")
+    }
+  }
+
+  def runUntilConvergence[VD: ClassTag, ED: ClassTag](
+                                                       graph: Graph[VD, ED], tol: Double, resetProb: Double = 0.15): Graph[Double, Double] =
+  {
+    runUntilConvergenceWithOptions(graph, tol, resetProb)
   }
 
   /**
@@ -53,7 +104,7 @@ object PageRankVertexPrimButArrayComm {
     * @return the graph containing with each vertex containing the PageRank and each edge
     *         containing the normalized weight.
     */
-  def runUntilConvergence[VD: ClassTag, ED: ClassTag](
+  def runUntilConvergenceWithOptions[VD: ClassTag, ED: ClassTag](
                                                                   graph: Graph[VD, ED], tol: Double, resetProb: Double = 0.15,
                                                                   srcId: Option[VertexId] = None): Graph[Double, Double] =
   {
@@ -99,7 +150,7 @@ object PageRankVertexPrimButArrayComm {
       (newPR, newDelta)
     }
 
-    def sendMessage(edge: EdgeTriplet[(Double, Double), Double]):Iterator[(VertexId, Array[Double])] = {
+    def sendMessage(edge: EdgeTriplet[(Double, Double), Double]): Iterator[(VertexId, Array[Double])] = {
       if (edge.srcAttr._2 > tol) {
         Iterator((edge.dstId, Array(edge.srcAttr._2 * edge.attr)))
       } else {
@@ -108,7 +159,7 @@ object PageRankVertexPrimButArrayComm {
     }
 
     def messageCombiner(a: Array[Double], b: Array[Double]): Array[Double] = {
-      a(0) = a(0)+b(0)
+      a(0) = a(0) + b(0)
       a
     }
 
@@ -128,5 +179,4 @@ object PageRankVertexPrimButArrayComm {
       vp, sendMessage, messageCombiner)
       .mapVertices((vid, attr) => attr._1)
   }
-
 }
