@@ -171,16 +171,18 @@ object PageRankVertexArrayButPrimComm {
         vertexProgram(id, attr, msgSum)
     }
 
-    def createArray(a: Double): Array[Double] = {
-      val k: Int = 8
-      val arr = new Array[Double](k)
-      arr(0) = a
-      arr
-    }
+
 
     Pregel(pagerankGraph, initialMessage, activeDirection = EdgeDirection.Out)(
       vp, sendMessage, messageCombiner)
       .mapVertices((vid, attr) => attr._1)
+  }
+
+  def createArray(a: Double): Array[Double] = {
+    val k: Int = 8
+    val arr = new Array[Double](k)
+    arr(0) = a
+    arr
   }
 }
 
