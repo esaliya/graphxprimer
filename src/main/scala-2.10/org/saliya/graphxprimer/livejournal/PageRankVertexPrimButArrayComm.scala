@@ -152,7 +152,7 @@ object PageRankVertexPrimButArrayComm {
 
     def sendMessage(edge: EdgeTriplet[(Double, Double), Double]): Iterator[(VertexId, Array[Double])] = {
       if (edge.srcAttr._2 > tol) {
-        Iterator((edge.dstId, Array(edge.srcAttr._2 * edge.attr)))
+        Iterator((edge.dstId, createArray(edge.srcAttr._2 * edge.attr)))
       } else {
         Iterator.empty
       }
@@ -164,7 +164,7 @@ object PageRankVertexPrimButArrayComm {
     }
 
     // The initial message received by all vertices in PageRank
-    val initialMessage = if (personalized) Array(0.0) else Array(resetProb / (1.0 - resetProb))
+    val initialMessage = if (personalized) createArray(0.0) else createArray(resetProb / (1.0 - resetProb))
 
     // Execute a dynamic version of Pregel.
     val vp = if (personalized) {
@@ -178,5 +178,12 @@ object PageRankVertexPrimButArrayComm {
     Pregel(pagerankGraph, initialMessage, activeDirection = EdgeDirection.Out)(
       vp, sendMessage, messageCombiner)
       .mapVertices((vid, attr) => attr._1)
+  }
+
+  def createArray(a: Double): Array[Double] = {
+    val k: Int = 8
+    val arr = new Array[Double](k)
+    arr(0) = a
+    arr
   }
 }
