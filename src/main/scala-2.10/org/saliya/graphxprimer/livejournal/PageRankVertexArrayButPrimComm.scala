@@ -125,7 +125,7 @@ object PageRankVertexArrayButPrimComm {
       .mapTriplets( e => 1.0 / e.srcAttr )
       // Set the vertex attributes to (initialPR, delta = 0)
       .mapVertices { (id, attr) =>
-      if (id == src) (1.0, Array(Double.NegativeInfinity)) else (0.0, Array(0.0))
+      if (id == src) (1.0, createArray(Double.NegativeInfinity)) else (0.0, createArray(0.0))
     }
       .cache()
 
@@ -134,7 +134,7 @@ object PageRankVertexArrayButPrimComm {
     def vertexProgram(id: VertexId, attr: (Double, Array[Double]), msgSum: Double): (Double, Array[Double]) = {
       val (oldPR, lastDelta) = attr
       val newPR = oldPR + (1.0 - resetProb) * msgSum
-      (newPR, Array(newPR - oldPR))
+      (newPR, createArray(newPR - oldPR))
     }
 
     def personalizedVertexProgram(id: VertexId, attr: (Double, Array[Double]),
@@ -146,7 +146,7 @@ object PageRankVertexArrayButPrimComm {
 
       val newPR = teleport + (1.0 - resetProb) * msgSum
       val newDelta = if (lastDelta(0) == Double.NegativeInfinity) newPR else newPR - oldPR
-      (newPR, Array(newDelta))
+      (newPR, createArray(newDelta))
     }
 
     def sendMessage(edge: EdgeTriplet[(Double, Array[Double]), Double]) = {
@@ -169,6 +169,13 @@ object PageRankVertexArrayButPrimComm {
     } else {
       (id: VertexId, attr: (Double, Array[Double]), msgSum: Double) =>
         vertexProgram(id, attr, msgSum)
+    }
+
+    def createArray(a: Double): Array[Double] = {
+      val k: Int = 8
+      val arr = new Array[Double](k)
+      arr(0) = a
+      arr
     }
 
     Pregel(pagerankGraph, initialMessage, activeDirection = EdgeDirection.Out)(
