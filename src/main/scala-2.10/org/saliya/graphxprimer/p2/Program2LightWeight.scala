@@ -117,7 +117,10 @@ object Program2LightWeight {
 //    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
     // TODO - stripping - let's use a simple array
     val initialMsg: Array[Int] = null
-    val maxIterations = k-1 // (k-2)+1
+
+    // TODO - stripping - set pregel iterations to 1
+//    val maxIterations = k-1 // (k-2)+1
+    val maxIterations = 1 // (k-2)+1
 
     val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
 
