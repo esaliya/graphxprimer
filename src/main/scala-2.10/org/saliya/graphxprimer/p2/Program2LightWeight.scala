@@ -133,7 +133,9 @@ object Program2LightWeight {
   def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
     val myRowOfTable = value._2
     if (message != null) {
-      val neighbors = message.keySet
+
+      // TODO - strpping - no computation or lookup of gf field
+      /*val neighbors = message.keySet
       val i = myRowOfTable(k + 1)
       myRowOfTable(i) = 0
 
@@ -146,7 +148,7 @@ object Program2LightWeight {
           myRowOfTable(i) = gf.add(myRowOfTable(i), product)
         }
       }
-      myRowOfTable(k + 1) += 1 // increment i
+      myRowOfTable(k + 1) += 1 // increment i*/
 
       (value._1, myRowOfTable.clone())
     } else {
