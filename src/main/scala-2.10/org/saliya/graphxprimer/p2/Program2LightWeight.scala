@@ -113,7 +113,9 @@ object Program2LightWeight {
 
 
     // Now, we use the pregel operator from 2 to k (including k) times
-    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+//    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+    // TODO - stripping - let's use a simple array
+    val initialMsg: Array[Int] = null
     val maxIterations = k-1 // (k-2)+1
 
     val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
@@ -130,7 +132,9 @@ object Program2LightWeight {
     circuitSum
   }
 
-  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
+  // TODO - stripping - just using an array
+  //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
+  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Array[Int]) =>  {
     val myRowOfTable = value._2
     if (message != null) {
 
@@ -156,13 +160,18 @@ object Program2LightWeight {
     }
   }
 
-  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
-    val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
-    hm += triplet.srcId.toInt -> triplet.srcAttr._2
-    Iterator((triplet.dstId, hm))
+//  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
+//    val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
+//    hm += triplet.srcId.toInt -> triplet.srcAttr._2
+//    Iterator((triplet.dstId, hm))
+//  }
+
+  // TODO - stripping - just send my array. If this works then we'll have to include vertex ID as an array element
+  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, Array[Int])] = {
+    Iterator((triplet.dstId, triplet.srcAttr._2))
   }
 
-  def mergeMsg(msg1: scala.collection.mutable.HashMap[Int, Array[Int]], msg2: scala.collection.mutable.HashMap[Int, Array[Int]]): scala.collection.mutable.HashMap[Int, Array[Int]] = {
+  /*def mergeMsg(msg1: scala.collection.mutable.HashMap[Int, Array[Int]], msg2: scala.collection.mutable.HashMap[Int, Array[Int]]): scala.collection.mutable.HashMap[Int, Array[Int]] = {
     val keys = msg2.keys
     for (key <- keys) {
       val array = msg2.get(key)
@@ -170,6 +179,11 @@ object Program2LightWeight {
         msg1.put(key, array.get)
       }
     }
+    msg1
+  }*/
+
+  // TODO - stripping - don't merge, just send one that you get
+  def mergeMsg(msg1: Array[Int], msg2: Array[Int]): Array[Int] = {
     msg1
   }
 
