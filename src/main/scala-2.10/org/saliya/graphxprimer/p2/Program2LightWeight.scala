@@ -31,6 +31,7 @@ object Program2LightWeight {
     val conf = new SparkConf()
     GraphXUtils.registerKryoClasses(conf)
     conf.registerKryoClasses(Array(classOf[mutable.HashMap[Int, Array[Int]]]))
+    conf.registerKryoClasses(Array(classOf[Array[Int]]))
 
     val partitionStrategy: Option[PartitionStrategy] = options.remove("partStrategy")
       .map(PartitionStrategy.fromString)
