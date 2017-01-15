@@ -120,7 +120,7 @@ object Program2LightWeight {
 
     // TODO - stripping - set pregel iterations to 1
 //    val maxIterations = k-1 // (k-2)+1
-    val maxIterations = 1 // (k-2)+1
+    val maxIterations = 2 // (k-2)+1
 
     val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
 
