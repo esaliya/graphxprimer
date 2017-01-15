@@ -86,9 +86,9 @@ object Program2LightWeight {
     var totalSum: Int = 0
     val randomSeed: Long = random.nextLong
 
-    // TODO - stripping - make just 1 run
+    // TODO - stripping - make just 2 run
 //    for (i <- 0 until twoRaisedToK){
-    for (i <- 0 until 1){
+    for (i <- 0 until 2){
       val s = evaluateCircuit(graph  , randomAssignment, gf, k, i, randomSeed)
       totalSum = gf.add(totalSum, s)
     }
