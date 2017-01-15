@@ -1,9 +1,9 @@
-package org.saliya.graphxprimer
+package org.saliya.graphxprimer.p2
 
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
+import org.apache.spark.{SparkConf, SparkContext}
 import org.saliya.graphxprimer.multilinear.{GaloisField, Polynomial}
 
 import scala.collection.mutable
