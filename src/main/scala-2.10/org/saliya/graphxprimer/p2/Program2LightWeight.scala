@@ -54,13 +54,17 @@ object Program2LightWeight {
 
   }
 
-  def testGraph(fname: String, k: PartitionID, numColors: PartitionID, graph: Graph[(PartitionID, Array[PartitionID]), PartitionID]): Unit = {
+  // TODO - stripping - make primitive vertices
+//  def testGraph(fname: String, k: PartitionID, numColors: PartitionID, graph: Graph[(PartitionID, Array[PartitionID]), PartitionID]): Unit = {
+  def testGraph(fname: String, k: Int, numColors: Int, graph: Graph[(Int, Int), Int]): Unit = {
     val seed: VertexId = 10
     val ret = colorfulGraphMotif(graph, numColors, k, seed)
     println("\n*** Test for " + fname + " returned " + ret + " numcolors: " + numColors + " k: " + k)
   }
 
-  def colorfulGraphMotif(graph: Graph[(Int, Array[Int]), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+  // TODO - stripping - make primitive vertices
+//  def colorfulGraphMotif(graph: Graph[(Int, Array[Int]), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+  def colorfulGraphMotif(graph: Graph[(Int, Int), Int], numColors: Int, k: Int, seed: Long): Boolean = {
     // invalid input: k is negative
     if (k <= 0) throw new IllegalArgumentException("k must be a positive integer")
     // trivial case: k = 1
@@ -96,10 +100,14 @@ object Program2LightWeight {
     totalSum > 0
   }
 
-  def evaluateCircuit(graph: Graph[(Int, Array[Int]), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
+  // TODO - stripping - make primitive vertices
+//  def evaluateCircuit(graph: Graph[(Int, Array[Int]), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
+  def evaluateCircuit(graph: Graph[(Int, Int), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
     val random = new java.util.Random(randomSeed)
     val fieldSize = gf.getFieldSize
 
+  // TODO - stripping - make primitive vertices
+  /*
     graph.vertices.foreach(v => {
       // First clear the vertex row of table
       val rowOfTable = v._2._2
@@ -110,7 +118,7 @@ object Program2LightWeight {
       val color = v._2._1
       val dotProduct = randomAssignment(color) & iter
       v._2._2(1) = if (Integer.bitCount(dotProduct) % 2 == 1) 0 else 1
-    })
+    })*/
 
 
     // Now, we use the pregel operator from 2 to k (including k) times
@@ -126,7 +134,9 @@ object Program2LightWeight {
 
     val products = finalGraph.vertices.cache().mapValues(v => {
       val weight = random.nextInt(fieldSize)
-      val product = gf.multiply(weight, v._2(k))
+      // TODO - stripping - make primitive vertices
+//      val product = gf.multiply(weight, v._2(k))
+      val product = gf.multiply(weight, v._2)
       product
     }).collect()
 
@@ -140,7 +150,9 @@ object Program2LightWeight {
   //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
   // TODO - stripping - further to just  1 primitive comm - no array
 //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Array[Int]) =>  {
-  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Int) =>  {
+  // TODO - strpping - make primitive vertices
+  //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Int) =>  {
+  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Int), message: Int) =>  {
     val myRowOfTable = value._2
 //    if (message != null) {
     // TODO - stripping - further to just  1 primitive comm - no array
@@ -182,7 +194,12 @@ object Program2LightWeight {
 //  }
 
   // TODO - stripping - further to just  1 primitive comm - no array
-  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, Int)] = {
+  /*def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, Int)] = {
+    Iterator((triplet.dstId, 1))
+  }*/
+
+  // TODO - strpping - make primitive vertices
+  def sendMsg(triplet: EdgeTriplet[(Int, Int), Int]): Iterator[(VertexId, Int)] = {
     Iterator((triplet.dstId, 1))
   }
 
@@ -207,8 +224,7 @@ object Program2LightWeight {
     msg1+msg2
   }
 
-
-  def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Array[Int]), Int], Int) ={
+  /*def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Array[Int]), Int], Int) ={
     val vertices = new Array[(Long, (Int, Array[Int]))](n)
     val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
     var edgeCount = 0
@@ -245,6 +261,50 @@ object Program2LightWeight {
     val defaultVertex = (-1, Array(-1))
 
     val verticesRDD: RDD[(VertexId, (Int, Array[Int]))] = sc.parallelize(vertices).persist(vsl)
+    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges).persist(esl)
+
+    (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
+  }*/
+
+
+  // TODO - stripping - make primitive vertices
+  def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Int), Int], Int) ={
+    val vertices = new Array[(Long, (Int, Int))](n)
+    val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
+    var edgeCount = 0
+    val colors = new mutable.HashSet[Int]()
+    var mode = -1
+    for (line <- Source.fromFile(f).getLines()){
+      if (mode == -1 && "# node color".equals(line)){
+        mode = 0
+      }
+
+      if (mode == 0 && "# head tail".equals(line)){
+        mode = 1
+      }
+
+      if (mode == 1 && "# motif".equals(line)){
+        mode = 2
+      }
+
+      if (!line.startsWith("#") && mode != 2){
+        val splits = line.split(" ")
+        if (mode == 0){
+          val vertexId = splits(0).toInt
+          val color = splits(1).toInt
+          colors.add(color)
+          vertices(vertexId) = (vertexId.toLong, (color, 1))
+        } else if (mode == 1){
+          edges += Edge(splits(0).toInt, splits(1).toInt, 1)
+          edges += Edge(splits(1).toInt, splits(0).toInt, 1) // undirected edges
+          edgeCount += 2
+        }
+      }
+    }
+
+    val defaultVertex = (-1, -1)
+
+    val verticesRDD: RDD[(VertexId, (Int, Int))] = sc.parallelize(vertices).persist(vsl)
     val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges).persist(esl)
 
     (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
