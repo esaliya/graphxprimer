@@ -162,7 +162,9 @@ object Program2LightWeight {
       }
       myRowOfTable(k + 1) += 1 // increment i*/
 
-      (value._1, myRowOfTable.clone())
+      // TODO - stripping - no clone
+//      (value._1, myRowOfTable.clone())
+      (value._1, myRowOfTable)
     } else {
       value
     }
