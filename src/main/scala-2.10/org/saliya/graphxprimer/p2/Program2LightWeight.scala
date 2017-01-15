@@ -296,7 +296,8 @@ object Program2LightWeight {
           vertices(vertexId) = (vertexId.toLong, (color, 1))
         } else if (mode == 1){
           edges += Edge(splits(0).toInt, splits(1).toInt, 1)
-          edges += Edge(splits(1).toInt, splits(0).toInt, 1) // undirected edges
+          // TODO - stripping - make just one edge
+//          edges += Edge(splits(1).toInt, splits(0).toInt, 1) // undirected edges
           edgeCount += 2
         }
       }
