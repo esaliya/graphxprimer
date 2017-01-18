@@ -21,7 +21,7 @@ object Program {
 
     val spark = SparkSession
       .builder
-      .appName("Spark Prop Graph").master("local[1]")
+      .appName("Spark Prop Graph")
       .getOrCreate()
 
     val sc = spark.sparkContext
