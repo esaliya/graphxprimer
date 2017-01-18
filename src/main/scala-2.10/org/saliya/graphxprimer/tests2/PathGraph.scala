@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
   * Created by esaliya on 11/16/16.
   */
 object PathGraph {
-  def main(args: Array[String]): Unit = {
+  /*def main(args: Array[String]): Unit = {
     val spark = SparkSession
       .builder
       .appName("Spark Pregel Example2")
@@ -97,7 +97,7 @@ object PathGraph {
     val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges)
 
     Graph(verticesRDD, edgesRDD, defaultVertex)
-  }
+  }*/
 
 }
 
