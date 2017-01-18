@@ -16,8 +16,8 @@ import scala.io.Source
   */
 object Program2 {
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.OFF)
-    Logger.getLogger("akka").setLevel(Level.OFF)
+//    Logger.getLogger("org").setLevel(Level.OFF)
+//    Logger.getLogger("akka").setLevel(Level.OFF)
     val fname = args(0)
     val n = args(1).toInt
     val k = args(2).toInt
