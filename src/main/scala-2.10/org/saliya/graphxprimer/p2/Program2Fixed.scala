@@ -1,6 +1,5 @@
 package org.saliya.graphxprimer.p2
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -14,10 +13,8 @@ import scala.io.Source
 /**
   * Saliya Ekanayake on 1/14/17.
   */
-object Program2 {
+object Program2Fixed {
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.OFF)
-    Logger.getLogger("akka").setLevel(Level.OFF)
     val fname = args(0)
     val n = args(1).toInt
     val k = args(2).toInt
