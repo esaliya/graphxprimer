@@ -1,6 +1,5 @@
-package org.saliya.graphxprimer.p2
+package org.saliya.p3
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -14,10 +13,8 @@ import scala.io.Source
 /**
   * Saliya Ekanayake on 1/14/17.
   */
-object Program2 {
+object Program2LightWeight {
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.OFF)
-    Logger.getLogger("akka").setLevel(Level.OFF)
     val fname = args(0)
     val n = args(1).toInt
     val k = args(2).toInt
@@ -34,6 +31,7 @@ object Program2 {
     val conf = new SparkConf()
     GraphXUtils.registerKryoClasses(conf)
     conf.registerKryoClasses(Array(classOf[mutable.HashMap[Int, Array[Int]]]))
+    conf.registerKryoClasses(Array(classOf[Array[Int]]))
 
     val partitionStrategy: Option[PartitionStrategy] = options.remove("partStrategy")
       .map(PartitionStrategy.fromString)
@@ -42,7 +40,7 @@ object Program2 {
     val vertexStorageLevel = options.remove("vertexStorageLevel")
       .map(StorageLevel.fromString).getOrElse(StorageLevel.MEMORY_ONLY)
 
-    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")").setMaster("local[*]"))
+    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 
     val tup = createGraphFromFile(fname, n, k, sc, vertexStorageLevel, edgeStorageLevel)
     val g = tup._1.cache()
@@ -56,13 +54,17 @@ object Program2 {
 
   }
 
-  def testGraph(fname: String, k: PartitionID, numColors: PartitionID, graph: Graph[(PartitionID, Array[PartitionID]), PartitionID]): Unit = {
+  // TODO - stripping - make primitive vertices
+//  def testGraph(fname: String, k: PartitionID, numColors: PartitionID, graph: Graph[(PartitionID, Array[PartitionID]), PartitionID]): Unit = {
+  def testGraph(fname: String, k: Int, numColors: Int, graph: Graph[(Int, Int), Int]): Unit = {
     val seed: VertexId = 10
     val ret = colorfulGraphMotif(graph, numColors, k, seed)
     println("\n*** Test for " + fname + " returned " + ret + " numcolors: " + numColors + " k: " + k)
   }
 
-  def colorfulGraphMotif(graph: Graph[(Int, Array[Int]), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+  // TODO - stripping - make primitive vertices
+//  def colorfulGraphMotif(graph: Graph[(Int, Array[Int]), Int], numColors: Int, k: Int, seed: Long): Boolean = {
+  def colorfulGraphMotif(graph: Graph[(Int, Int), Int], numColors: Int, k: Int, seed: Long): Boolean = {
     // invalid input: k is negative
     if (k <= 0) throw new IllegalArgumentException("k must be a positive integer")
     // trivial case: k = 1
@@ -88,7 +90,9 @@ object Program2 {
     var totalSum: Int = 0
     val randomSeed: Long = random.nextLong
 
-    for (i <- 0 until 1) {
+    // TODO - stripping - make just 2 run
+//    for (i <- 0 until twoRaisedToK){
+    for (i <- 0 until 2){
       val s = evaluateCircuit(graph  , randomAssignment, gf, k, i, randomSeed)
       totalSum = gf.add(totalSum, s)
     }
@@ -96,10 +100,14 @@ object Program2 {
     totalSum > 0
   }
 
-  def evaluateCircuit(graph: Graph[(Int, Array[Int]), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
+  // TODO - stripping - make primitive vertices
+//  def evaluateCircuit(graph: Graph[(Int, Array[Int]), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
+  def evaluateCircuit(graph: Graph[(Int, Int), Int], randomAssignment: Array[Int], gf: GaloisField, k: Int, iter: Int, randomSeed: Long): Int ={
     val random = new java.util.Random(randomSeed)
     val fieldSize = gf.getFieldSize
 
+  // TODO - stripping - make primitive vertices
+  /*
     graph.vertices.foreach(v => {
       // First clear the vertex row of table
       val rowOfTable = v._2._2
@@ -110,18 +118,25 @@ object Program2 {
       val color = v._2._1
       val dotProduct = randomAssignment(color) & iter
       v._2._2(1) = if (Integer.bitCount(dotProduct) % 2 == 1) 0 else 1
-    })
+    })*/
 
 
     // Now, we use the pregel operator from 2 to k (including k) times
-    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+//    val initialMsg: scala.collection.mutable.HashMap[Int, Array[Int]] = null
+    // TODO - stripping - let's use a simple array
+//    val initialMsg: Array[Int] = null
+// TODO - stripping - further to just  1 primitive comm - no array
+    val initialMsg: Int = -1
+
     val maxIterations = k-1 // (k-2)+1
 
     val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, random, fieldSize, gf), sendMsg, mergeMsg)
 
     val products = finalGraph.vertices.cache().mapValues(v => {
       val weight = random.nextInt(fieldSize)
-      val product = gf.multiply(weight, v._2(k))
+      // TODO - stripping - make primitive vertices
+//      val product = gf.multiply(weight, v._2(k))
+      val product = gf.multiply(weight, v._2)
       product
     }).collect()
 
@@ -131,19 +146,25 @@ object Program2 {
     circuitSum
   }
 
-  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
+  // TODO - stripping - just using an array
+  //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: scala.collection.mutable.HashMap[Int, Array[Int]]) =>  {
+  // TODO - stripping - further to just  1 primitive comm - no array
+//  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Array[Int]) =>  {
+  // TODO - strpping - make primitive vertices
+  //  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Array[Int]), message: Int) =>  {
+  def vprogWrapper(k: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField) = (vertexId: VertexId, value: (Int, Int), message: Int) =>  {
     val myRowOfTable = value._2
-    if (message != null) {
-      val neighbors = message.keySet
+//    if (message != null) {
+    // TODO - stripping - further to just  1 primitive comm - no array
+    if (message != -1) {
+
+      // TODO - strpping - no computation or lookup of gf field
+      /*val neighbors = message.keySet
       val i = myRowOfTable(k + 1)
       myRowOfTable(i) = 0
 
       for (j <- 1 until i) {
         for (neighbor <- neighbors) {
-          // TODO - (node,neighbor,i,j) will always get the same random number through (2^k) invocations of the evaluate circuit
-          // TODO - so it boils down to fixing the order of neighbors that we process
-          // TODO - We can keep list of neighbors for each node.
-          // TODO - The other option is to have a weight lookup table
           val weight = random.nextInt(fieldSize)
           val neighborRowOfTable = message.get(neighbor)
           var product = gf.multiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
@@ -151,21 +172,38 @@ object Program2 {
           myRowOfTable(i) = gf.add(myRowOfTable(i), product)
         }
       }
-      myRowOfTable(k + 1) += 1 // increment i
+      myRowOfTable(k + 1) += 1 // increment i*/
 
-      (value._1, myRowOfTable.clone())
+      // TODO - stripping - no clone
+//      (value._1, myRowOfTable.clone())
+      (value._1, myRowOfTable)
     } else {
       value
     }
   }
 
-  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
-    val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
-    hm += triplet.srcId.toInt -> triplet.srcAttr._2
-    Iterator((triplet.dstId, hm))
+//  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, scala.collection.mutable.HashMap[Int, Array[Int]])] = {
+//    val hm = new scala.collection.mutable.HashMap[Int, Array[Int]]
+//    hm += triplet.srcId.toInt -> triplet.srcAttr._2
+//    Iterator((triplet.dstId, hm))
+//  }
+
+  // TODO - stripping - just send my array. If this works then we'll have to include vertex ID as an array element
+//  def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, Array[Int])] = {
+//    Iterator((triplet.dstId, triplet.srcAttr._2))
+//  }
+
+  // TODO - stripping - further to just  1 primitive comm - no array
+  /*def sendMsg(triplet: EdgeTriplet[(Int, Array[Int]), Int]): Iterator[(VertexId, Int)] = {
+    Iterator((triplet.dstId, 1))
+  }*/
+
+  // TODO - strpping - make primitive vertices
+  def sendMsg(triplet: EdgeTriplet[(Int, Int), Int]): Iterator[(VertexId, Int)] = {
+    Iterator((triplet.dstId, 1))
   }
 
-  def mergeMsg(msg1: scala.collection.mutable.HashMap[Int, Array[Int]], msg2: scala.collection.mutable.HashMap[Int, Array[Int]]): scala.collection.mutable.HashMap[Int, Array[Int]] = {
+  /*def mergeMsg(msg1: scala.collection.mutable.HashMap[Int, Array[Int]], msg2: scala.collection.mutable.HashMap[Int, Array[Int]]): scala.collection.mutable.HashMap[Int, Array[Int]] = {
     val keys = msg2.keys
     for (key <- keys) {
       val array = msg2.get(key)
@@ -174,10 +212,19 @@ object Program2 {
       }
     }
     msg1
+  }*/
+
+  // TODO - stripping - don't merge, just send one that you get
+  /*def mergeMsg(msg1: Array[Int], msg2: Array[Int]): Array[Int] = {
+    msg1
+  }*/
+
+  // TODO - stripping - further to just  1 primitive comm - no array
+  def mergeMsg(msg1: Int, msg2: Int): Int = {
+    msg1+msg2
   }
 
-
-  def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Array[Int]), Int], Int) ={
+  /*def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Array[Int]), Int], Int) ={
     val vertices = new Array[(Long, (Int, Array[Int]))](n)
     val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
     var edgeCount = 0
@@ -214,6 +261,51 @@ object Program2 {
     val defaultVertex = (-1, Array(-1))
 
     val verticesRDD: RDD[(VertexId, (Int, Array[Int]))] = sc.parallelize(vertices).persist(vsl)
+    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges).persist(esl)
+
+    (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
+  }*/
+
+
+  // TODO - stripping - make primitive vertices
+  def createGraphFromFile(f:String, n: Int, k: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(Int, Int), Int], Int) ={
+    val vertices = new Array[(Long, (Int, Int))](n)
+    val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
+    var edgeCount = 0
+    val colors = new mutable.HashSet[Int]()
+    var mode = -1
+    for (line <- Source.fromFile(f).getLines()){
+      if (mode == -1 && "# node color".equals(line)){
+        mode = 0
+      }
+
+      if (mode == 0 && "# head tail".equals(line)){
+        mode = 1
+      }
+
+      if (mode == 1 && "# motif".equals(line)){
+        mode = 2
+      }
+
+      if (!line.startsWith("#") && mode != 2){
+        val splits = line.split(" ")
+        if (mode == 0){
+          val vertexId = splits(0).toInt
+          val color = splits(1).toInt
+          colors.add(color)
+          vertices(vertexId) = (vertexId.toLong, (color, 1))
+        } else if (mode == 1){
+          edges += Edge(splits(0).toInt, splits(1).toInt, 1)
+          // TODO - stripping - make just one edge
+//          edges += Edge(splits(1).toInt, splits(0).toInt, 1) // undirected edges
+          edgeCount += 2
+        }
+      }
+    }
+
+    val defaultVertex = (-1, -1)
+
+    val verticesRDD: RDD[(VertexId, (Int, Int))] = sc.parallelize(vertices).persist(vsl)
     val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges).persist(esl)
 
     (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)

@@ -1,6 +1,5 @@
-package org.saliya.graphxprimer.p2
+package org.saliya.p3
 
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
@@ -14,10 +13,8 @@ import scala.io.Source
 /**
   * Saliya Ekanayake on 1/14/17.
   */
-object Program2 {
+object Program2Fixed {
   def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.OFF)
-    Logger.getLogger("akka").setLevel(Level.OFF)
     val fname = args(0)
     val n = args(1).toInt
     val k = args(2).toInt
@@ -42,7 +39,7 @@ object Program2 {
     val vertexStorageLevel = options.remove("vertexStorageLevel")
       .map(StorageLevel.fromString).getOrElse(StorageLevel.MEMORY_ONLY)
 
-    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")").setMaster("local[*]"))
+    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 
     val tup = createGraphFromFile(fname, n, k, sc, vertexStorageLevel, edgeStorageLevel)
     val g = tup._1.cache()
@@ -88,7 +85,7 @@ object Program2 {
     var totalSum: Int = 0
     val randomSeed: Long = random.nextLong
 
-    for (i <- 0 until 1) {
+    for (i <- 0 until twoRaisedToK){
       val s = evaluateCircuit(graph  , randomAssignment, gf, k, i, randomSeed)
       totalSum = gf.add(totalSum, s)
     }
