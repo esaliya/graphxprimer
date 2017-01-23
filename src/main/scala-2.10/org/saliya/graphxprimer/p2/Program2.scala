@@ -121,7 +121,7 @@ object Program2 {
 
     val products = finalGraph.vertices.cache().mapValues(v => {
       val weight = random.nextInt(fieldSize)
-      val product = gf.multiply(weight, v._2(k))
+      val product = gf.ffMultiply(weight, v._2(k))
       product
     }).collect()
 
@@ -146,8 +146,8 @@ object Program2 {
           // TODO - The other option is to have a weight lookup table
           val weight = random.nextInt(fieldSize)
           val neighborRowOfTable = message.get(neighbor)
-          var product = gf.multiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
-          product = gf.multiply(weight, product)
+          var product = gf.ffMultiply(myRowOfTable(j), neighborRowOfTable.get(i - j))
+          product = gf.ffMultiply(weight, product)
           myRowOfTable(i) = gf.add(myRowOfTable(i), product)
         }
       }
