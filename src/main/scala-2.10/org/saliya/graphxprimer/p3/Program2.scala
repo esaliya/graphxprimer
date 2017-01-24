@@ -1,4 +1,4 @@
-package org.saliya.p3
+package org.saliya.graphxprimer.p3
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.graphx._
@@ -44,7 +44,7 @@ object Program2 {
       .map(StorageLevel.fromString).getOrElse(StorageLevel.MEMORY_ONLY)
 
     val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")").setMaster("local[*]"))
-    //val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
+   //val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 
     val tup = createGraphFromFile(fname, n, k, r, sc, vertexStorageLevel, edgeStorageLevel)
     val g = tup._1.cache()
