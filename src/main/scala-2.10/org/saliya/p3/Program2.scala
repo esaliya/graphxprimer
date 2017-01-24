@@ -43,8 +43,8 @@ object Program2 {
     val vertexStorageLevel = options.remove("vertexStorageLevel")
       .map(StorageLevel.fromString).getOrElse(StorageLevel.MEMORY_ONLY)
 
-    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")").setMaster("local[*]"))
-    //val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
+    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")").setMaster("local[1]"))
+//    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 
     val tup = createGraphFromFile(fname, n, k, r, sc, vertexStorageLevel, edgeStorageLevel)
     val g = tup._1.cache()
