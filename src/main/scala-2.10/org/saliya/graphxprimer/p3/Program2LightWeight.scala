@@ -1,4 +1,4 @@
-package org.saliya.p3
+package org.saliya.graphxprimer.p3
 
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
