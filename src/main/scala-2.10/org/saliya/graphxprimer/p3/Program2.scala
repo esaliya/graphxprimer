@@ -22,6 +22,7 @@ object Program2 {
     val n = args(1).toInt
     val k = args(2).toInt
     val r = args(3).toInt
+    val d = args(4).toInt // duplicate computation
 
     val optionsList = args.drop(4).map { arg =>
       arg.dropWhile(_ == '-').split('=') match {
@@ -184,7 +185,7 @@ object Program2 {
     extendedTable
   }
 
-  def vprogWrapper(k: Int, r: Int, random: java.util.Random, fieldSize: Int, gf: GaloisField, cumulativeCompletionVariables: Array[Int]): (VertexId, (PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), mutable.HashMap[PartitionID, (Array[Array[PartitionID]], Array[Array[PartitionID]])]) => (PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]) = (vertexId: VertexId, value: (Int, Array[Array[Int]], Array[Array[Int]]), message: scala.collection.mutable.HashMap[Int, (Array[Array[Int]], Array[Array[Int]])]) =>  {
+  def vprogWrapper(k: Int, r: Int, d:Int, random: java.util.Random, fieldSize: Int, gf: GaloisField, cumulativeCompletionVariables: Array[Int]): (VertexId, (PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), mutable.HashMap[PartitionID, (Array[Array[PartitionID]], Array[Array[PartitionID]])]) => (PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]) = (vertexId: VertexId, value: (Int, Array[Array[Int]], Array[Array[Int]]), message: scala.collection.mutable.HashMap[Int, (Array[Array[Int]], Array[Array[Int]])]) =>  {
     if (message != null) {
       val myRowOfTable = value._2
       val myRowOfExtendedTable = value._3
@@ -193,30 +194,32 @@ object Program2 {
       val i = myRowOfTable(k + 1)(0)
       myRowOfTable(i) = Array.fill(r + 1)(0)
 
-      // for every quota l from 0 to r
-      for (l <- 0 until (r + 1)) {
-        // initialize the polynomial P_{i,u,l}
-        var polynomial = 0
-        // recursive step:
-        // iterate through all the pairs of polynomials whose sizes add up to i
-        for (iPrime <- 1 until i) {
-          for (neighbor <- neighbors) {
-            for (lPrime <- 0 until (l + 1)) {
-              // TODO - (node,neighbor,i,j) will always get the same random number through (2^k) invocations of the evaluate circuit
-              // TODO - so it boils down to fixing the order of neighbors that we process
-              // TODO - We can keep list of neighbors for each node.
-              // TODO - The other option is to have a weight lookup table
-              val weight = random.nextInt(fieldSize)
-              val neighborRowOfTable = message(neighbor)._1
-              var product = gf.ffMultiply(myRowOfTable(iPrime)(lPrime), neighborRowOfTable(i - iPrime)(l - lPrime))
-              product = gf.ffMultiply(weight, product)
-              polynomial = gf.add(polynomial, product)
+      for (duplicate <- 0 until d) { // The computation duplicate loop
+        // for every quota l from 0 to r
+        for (l <- 0 until (r + 1)) {
+          // initialize the polynomial P_{i,u,l}
+          var polynomial = 0
+          // recursive step:
+          // iterate through all the pairs of polynomials whose sizes add up to i
+          for (iPrime <- 1 until i) {
+            for (neighbor <- neighbors) {
+              for (lPrime <- 0 until (l + 1)) {
+                // TODO - (node,neighbor,i,j) will always get the same random number through (2^k) invocations of the evaluate circuit
+                // TODO - so it boils down to fixing the order of neighbors that we process
+                // TODO - We can keep list of neighbors for each node.
+                // TODO - The other option is to have a weight lookup table
+                val weight = random.nextInt(fieldSize)
+                val neighborRowOfTable = message(neighbor)._1
+                var product = gf.ffMultiply(myRowOfTable(iPrime)(lPrime), neighborRowOfTable(i - iPrime)(l - lPrime))
+                product = gf.ffMultiply(weight, product)
+                polynomial = gf.add(polynomial, product)
+              }
             }
           }
-        }
-        myRowOfTable(i)(l) = polynomial
-        if (cumulativeCompletionVariables(k - i) != 0) {
-          myRowOfExtendedTable(i)(l) = myRowOfTable(i)(l)
+          myRowOfTable(i)(l) = polynomial
+          if (cumulativeCompletionVariables(k - i) != 0) {
+            myRowOfExtendedTable(i)(l) = myRowOfTable(i)(l)
+          }
         }
       }
       myRowOfTable(k + 1)(0) += 1 // increment i
