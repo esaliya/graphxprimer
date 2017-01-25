@@ -53,19 +53,19 @@ object Program2 {
 
     val graph = partitionStrategy.foldLeft(g)(_.partitionBy(_))
     println("Read graph with " + graph.numVertices + " nodes and " + graph.numEdges + " edges")
-    testGraph(fname, k, r, numColors, graph)
+    testGraph(fname, k, r, d, numColors, graph)
 
     sc.stop()
 
   }
 
-  def testGraph(fname: String, k: PartitionID, r: PartitionID, numColors: PartitionID, graph: Graph[(PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), PartitionID]): Unit = {
+  def testGraph(fname: String, k: PartitionID, r: PartitionID, d:Int, numColors: PartitionID, graph: Graph[(PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), PartitionID]): Unit = {
     val seed: VertexId = 10
-    val ret = colorfulGraphMotif(graph, k, r, seed)
+    val ret = colorfulGraphMotif(graph, k, r, d, seed)
     println("\n*** Test for " + fname + " returned " + ret + " numcolors: " + numColors + " k: " + k)
   }
 
-  def colorfulGraphMotif(graph: Graph[(Int, Array[Array[Int]], Array[Array[Int]]), Int], k: Int, r: Int, seed: Long): mutable.HashMap[VertexId, Array[Array[Boolean]]] = {
+  def colorfulGraphMotif(graph: Graph[(Int, Array[Array[Int]], Array[Array[Int]]), Int], k: Int, r: Int, d:Int, seed: Long): mutable.HashMap[VertexId, Array[Array[Boolean]]] = {
     // invalid input: k is negative
     if (k <= 0) throw new IllegalArgumentException("k must be a positive integer")
     // trivial case: k = 1
@@ -98,7 +98,7 @@ object Program2 {
     println("Running for " + FIXED_ITR + " iterations")
     for (i <- 0 until FIXED_ITR) {
       val startTime: Long = System.currentTimeMillis
-      val s = evaluateCircuit(graph, randomAssignment, completionVariables, gf, k, r, i, randomSeed)
+      val s = evaluateCircuit(graph, randomAssignment, completionVariables, gf, k, r, d, i, randomSeed)
       // TODO Is there a more efficient way to merge?
       for ((node, tableForNode) <- s) {
         val tableTotalSum = totalSum(node)
@@ -131,7 +131,7 @@ object Program2 {
     decisionTable
   }
 
-  def evaluateCircuit(graph: Graph[(Int, Array[Array[Int]], Array[Array[Int]]), Int], randomAssignment: Array[Int], completionVariables: Array[Int], gf: GaloisField, k: Int, r: Int, iter: Int, randomSeed: Long): mutable.HashMap[VertexId, Array[Array[Int]]] ={
+  def evaluateCircuit(graph: Graph[(Int, Array[Array[Int]], Array[Array[Int]]), Int], randomAssignment: Array[Int], completionVariables: Array[Int], gf: GaloisField, k: Int, r: Int, d:Int, iter: Int, randomSeed: Long): mutable.HashMap[VertexId, Array[Array[Int]]] ={
     val random = new java.util.Random(randomSeed)
     val fieldSize = gf.getFieldSize
 
@@ -169,7 +169,7 @@ object Program2 {
     val initialMsg: scala.collection.mutable.HashMap[Int, (Array[Array[Int]], Array[Array[Int]])] = null
     val maxIterations = k-1 // (k-2)+1
 
-    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, r, random, fieldSize, gf, cumulativeCompletionVariables), sendMsg, mergeMsg)
+    val finalGraph = graph.pregel(initialMsg,maxIterations, EdgeDirection.Out)(vprogWrapper(k, r, d,random, fieldSize, gf, cumulativeCompletionVariables), sendMsg, mergeMsg)
 
 //    val products = finalGraph.vertices.cache().mapValues(v => {
 //      val weight = random.nextInt(fieldSize)
