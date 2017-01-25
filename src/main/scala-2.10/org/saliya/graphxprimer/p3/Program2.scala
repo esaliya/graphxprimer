@@ -24,7 +24,7 @@ object Program2 {
     val r = args(3).toInt
     val d = args(4).toInt // duplicate computation
 
-    val optionsList = args.drop(4).map { arg =>
+    val optionsList = args.drop(5).map { arg =>
       arg.dropWhile(_ == '-').split('=') match {
         case Array(opt, v) => opt -> v
         case _ => throw new IllegalArgumentException("Invalid argument: " + arg)
