@@ -89,8 +89,11 @@ object Program2 {
     val randomSeed: Long = random.nextLong
 
     for (i <- 0 until twoRaisedToK){
+      val startTime = System.currentTimeMillis()
       val s = evaluateCircuit(graph  , randomAssignment, gf, k, i, randomSeed)
       totalSum = gf.add(totalSum, s)
+      val endTime: Long = System.currentTimeMillis
+      println("Iteration " + i + ": Took " +  (endTime - startTime) / 1000.0 + " seconds")
     }
 
     totalSum > 0
