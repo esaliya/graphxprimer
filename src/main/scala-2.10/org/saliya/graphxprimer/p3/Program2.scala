@@ -24,9 +24,9 @@ object Program2 {
     val r = args(3).toInt
     val d = args(4).toInt // duplicate computation
     val vp = args(5).toInt // # vertex partitions
-    val ep = args(5).toInt // # edge partitions
+    val ep = args(6).toInt // # edge partitions
 
-    val optionsList = args.drop(5).map { arg =>
+    val optionsList = args.drop(7).map { arg =>
       arg.dropWhile(_ == '-').split('=') match {
         case Array(opt, v) => opt -> v
         case _ => throw new IllegalArgumentException("Invalid argument: " + arg)
