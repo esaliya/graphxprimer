@@ -36,6 +36,7 @@ object Program2 {
 
 
     val conf = new SparkConf()
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     GraphXUtils.registerKryoClasses(conf)
     conf.registerKryoClasses(Array(classOf[mutable.HashMap[Int, Array[Int]]]))
 
