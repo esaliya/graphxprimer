@@ -23,6 +23,8 @@ object Program2 {
     val k = args(2).toInt
     val r = args(3).toInt
     val d = args(4).toInt // duplicate computation
+    val vp = args(5).toInt // # vertex partitions
+    val ep = args(5).toInt // # edge partitions
 
     val optionsList = args.drop(5).map { arg =>
       arg.dropWhile(_ == '-').split('=') match {
@@ -47,7 +49,7 @@ object Program2 {
     val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 //    val sc = new SparkContext(conf.setAppName("Multilinear (" + fname + ")"))
 
-    val tup = createGraphFromFile(fname, n, k, r, sc, vertexStorageLevel, edgeStorageLevel)
+    val tup = createGraphFromFile(fname, n, k, r, vp, ep, sc, vertexStorageLevel, edgeStorageLevel)
     val g = tup._1.cache()
     val numColors = tup._2
 
@@ -248,7 +250,7 @@ object Program2 {
   }
 
 
-  def createGraphFromFile(f:String, n: Int, k: Int, r: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), PartitionID], PartitionID) ={
+  def createGraphFromFile(f:String, n: Int, k: Int, r: Int, vp: Int, ep: Int, sc: SparkContext, vsl: StorageLevel, esl: StorageLevel): (Graph[(PartitionID, Array[Array[PartitionID]], Array[Array[PartitionID]]), PartitionID], PartitionID) ={
     val vertices = new Array[(Long, (Int, Array[Array[Int]], Array[Array[Int]]))](n)
     val edges: ArrayBuffer[Edge[Int]] = new ArrayBuffer[Edge[Int]]()
     var edgeCount = 0
@@ -285,8 +287,8 @@ object Program2 {
 
     val defaultVertex = (-1, Array(Array(-1)), Array(Array(-1)))
 
-    val verticesRDD: RDD[(VertexId, (Int, Array[Array[Int]], Array[Array[Int]]))] = sc.parallelize(vertices).persist(vsl)
-    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges).persist(esl)
+    val verticesRDD: RDD[(VertexId, (Int, Array[Array[Int]], Array[Array[Int]]))] = sc.parallelize(vertices, vp).persist(vsl)
+    val edgesRDD: RDD[Edge[Int]] = sc.parallelize(edges, ep).persist(esl)
 
     (Graph(verticesRDD, edgesRDD, defaultVertex), colors.size)
   }
