@@ -94,7 +94,7 @@ object Program2 {
     // TODO change 1 to twoRaisedToK
 //    println("Running for " + twoRaisedToK + " iterations")
 //    for (i <- 0 until twoRaisedToK) {
-    val FIXED_ITR=25
+    val FIXED_ITR=5
     println("Running for " + FIXED_ITR + " iterations")
     for (i <- 0 until FIXED_ITR) {
       val startTime: Long = System.currentTimeMillis
