@@ -130,8 +130,11 @@ object Program2 {
     val totalSum: Array[Array[Array[Int]]] = Array.fill(graph.numVertices.toInt, k + 1, r + 1)(0)
 
     // TODO change 1 to twoRaisedToK
-    println("Running for " + twoRaisedToK + " iterations")
-    for (i <- 0 until twoRaisedToK) {
+//    println("Running for " + twoRaisedToK + " iterations")
+//    for (i <- 0 until twoRaisedToK) {
+    val FIXED_ITR=25
+    println("Running for " + FIXED_ITR + " iterations")
+    for (i <- 0 until FIXED_ITR) {
       val startTime: Long = System.currentTimeMillis
       val finalGraph = evaluateCircuit(graph, randomAssignment, completionVariables, gf, k, r, i, randomSeed)
       // TODO Is there a more efficient way to merge?
