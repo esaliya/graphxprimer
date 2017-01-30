@@ -101,19 +101,31 @@ public class GaloisField implements Serializable{
             }
         }
 
+//        // building multiplication table
+//        for (int i = 0; i < fieldSize; i++) {
+//            for (int j = 0; j < fieldSize; j++) {
+//                if (i == 0 || j == 0) {
+//                    mulTable[i][j] = 0;
+//                    continue;
+//                }
+//                int z = logTable[i] + logTable[j];
+//                z = z >= primitivePeriod ? z - primitivePeriod : z;
+//                z = powTable[z];
+//                mulTable[i][j] = z;
+//            }
+//        }
+
         // building multiplication table
         for (int i = 0; i < fieldSize; i++) {
             for (int j = 0; j < fieldSize; j++) {
+                mulTable[i][j] = ffMultiply(i, j);
                 if (i == 0 || j == 0) {
                     mulTable[i][j] = 0;
                     continue;
                 }
-                int z = logTable[i] + logTable[j];
-                z = z >= primitivePeriod ? z - primitivePeriod : z;
-                z = powTable[z];
-                mulTable[i][j] = z;
             }
         }
+
         // building division table
         for (int i = 0; i < fieldSize; i++) {
             for (int j = 1; j < fieldSize; j++) {

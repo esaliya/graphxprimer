@@ -247,8 +247,8 @@ object Program2 {
               // TODO - The other option is to have a weight lookup table
               val weight = random.nextInt(fieldSize)
               val neighborRowOfTable = message(neighbor)._1
-              var product = gf.ffMultiply(myRowOfTable(iPrime)(lPrime), neighborRowOfTable(i - iPrime)(l - lPrime))
-              product = gf.ffMultiply(weight, product)
+              var product = gf.multiply(myRowOfTable(iPrime)(lPrime), neighborRowOfTable(i - iPrime)(l - lPrime))
+              product = gf.multiply(weight, product)
               polynomial = gf.add(polynomial, product)
             }
           }
